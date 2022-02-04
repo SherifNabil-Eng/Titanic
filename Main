@@ -1,0 +1,225 @@
+#Load training data & testing data
+
+
+import pandas as pd
+
+CSV_PATH= os.path.join(PROJECT_ROOT_DIR, "Hands_On_ML/Chapter_3")
+
+train_data = pd.read_csv(CSV_PATH+'/train.csv')
+test_data  = pd.read_csv(CSV_PATH+'/test.csv')
+
+#build train and test Data frames
+
+train_df = pd.DataFrame(train_data)
+test_df =  pd.DataFrame(test_data)
+
+
+
+#test_df = test_df.set_index("PassengerId")
+
+#check train Dataframe
+
+train_df.head()
+
+'''
+Do Data Manipulation
+1- Drop Cabin columns
+2- Fill null values for Embarked with S
+3- Fill null values for females with Avg female age and males with male Avg 
+4- Make a new calculated column Age_Cat
+5- Make a new calculated column Fare Cat 
+6- Summing relatives onbaord 
+
+
+'''
+
+# Drop Cloumn Cabin
+train_up_df=train_df.drop(['Cabin'],axis=1)
+
+
+
+# fill in Embarked empty rows with S
+
+values = {"Embarked": "S"}
+
+train_up_df=train_up_df.fillna(value=values)
+
+#Check number of rows that are not na
+
+train_up_df["Embarked"].notna().count()
+
+# Get Avg of Female Age & Avg of Male Age
+
+Age_Avgs=train_up_df.groupby(["Sex"])["Age"].mean()
+print (Age_Avgs)
+
+from numpy.core.numeric import NaN
+#train_df_age_sex = train_up_df [["Age","Sex"]]
+#print (train_df_age_sex)
+
+
+
+train_up_df ['Updated_Age'] = train_up_df['Age']
+train_up_df.loc [((train_up_df['Updated_Age'].isnull()) &(train_up_df["Sex"]=="male")),['Updated_Age'] ] =Age_Avgs["male"]
+train_up_df.loc [((train_up_df['Updated_Age'].isnull()) &(train_up_df["Sex"]=="female")),['Updated_Age'] ] =Age_Avgs["female"]
+
+
+print (train_up_df.head(30))
+
+# Drop Cloumn Age
+train_up_df=train_up_df.drop(['Age'],axis=1)
+
+print (train_up_df.head(30))
+
+
+# assign a new Field Age_Cat
+
+Age_Catg_cat = {0:'zero',1:'two_five',2: 'six_ten',3: '11_15',4: '16_20',5: '21_30',6: '31_40',7: '41_50',8: '51_60',9: '61_70',10: '71_80',11: '81_90',12: '91_100'}
+Age_Cat_ser = pd.Series (Age_Catg_cat)
+#print (Age_Cat_ser[0])
+
+
+train_up_df['Age_Cat'] = ""
+
+train_up_df.loc [((train_up_df['Updated_Age']>=0)&(train_up_df['Updated_Age']<1)),'Age_Cat'] = Age_Cat_ser[0]
+train_up_df.loc [((train_up_df['Updated_Age']>=1)&(train_up_df['Updated_Age']<5)),'Age_Cat'] = Age_Cat_ser[1]
+train_up_df.loc [((train_up_df['Updated_Age']>=5)&(train_up_df['Updated_Age']<10)),'Age_Cat'] = Age_Cat_ser[2]
+train_up_df.loc [((train_up_df['Updated_Age']>=10)&(train_up_df['Updated_Age']<15)),'Age_Cat'] = Age_Cat_ser[3]
+train_up_df.loc [((train_up_df['Updated_Age']>=15)&(train_up_df['Updated_Age']<20)),'Age_Cat'] = Age_Cat_ser[4]
+train_up_df.loc [((train_up_df['Updated_Age']>=20)&(train_up_df['Updated_Age']<30)),'Age_Cat'] = Age_Cat_ser[5]
+train_up_df.loc [((train_up_df['Updated_Age']>=30)&(train_up_df['Updated_Age']<40)),'Age_Cat'] = Age_Cat_ser[6]
+train_up_df.loc [((train_up_df['Updated_Age']>=40)&(train_up_df['Updated_Age']<50)),'Age_Cat'] = Age_Cat_ser[7]
+train_up_df.loc [((train_up_df['Updated_Age']>=50)&(train_up_df['Updated_Age']<60)),'Age_Cat'] = Age_Cat_ser[8]
+train_up_df.loc [((train_up_df['Updated_Age']>=60)&(train_up_df['Updated_Age']<70)),'Age_Cat'] = Age_Cat_ser[9]
+train_up_df.loc [((train_up_df['Updated_Age']>=70)&(train_up_df['Updated_Age']<80)),'Age_Cat'] = Age_Cat_ser[10]
+train_up_df.loc [((train_up_df['Updated_Age']>=90)&(train_up_df['Updated_Age']<100)),'Age_Cat'] = Age_Cat_ser[11]
+
+train_up_df.head(50)
+
+#Assign a new Field Fare_Cat 
+
+Fare_Catg_cat = {0:'zero_1',1:'2_39',2: '40_99',3: '100_600'}
+Fare_Cat_ser = pd.Series (Fare_Catg_cat)
+#print (Age_Cat_ser[0])
+
+
+train_up_df['Fare_Cat'] = ""
+
+train_up_df.loc [((train_up_df['Fare']>=0)&(train_up_df['Fare']<1)),'Fare_Cat'] = Fare_Cat_ser[0]
+train_up_df.loc [((train_up_df['Fare']>=2)&(train_up_df['Fare']<39)),'Fare_Cat'] = Fare_Cat_ser[1]
+train_up_df.loc [((train_up_df['Fare']>=40)&(train_up_df['Fare']<99)),'Fare_Cat'] = Fare_Cat_ser[2]
+train_up_df.loc [((train_up_df['Fare']>=100)&(train_up_df['Fare']<600)),'Fare_Cat'] = Fare_Cat_ser[3]
+
+train_up_df.head(50)
+
+ Summing SibSp + Parch to get relatives onboard
+
+train_up_df ["Relatives_On_Board"] = train_up_df ["SibSp"]+train_up_df ["Parch"]
+
+Assign the survived to y 
+#set Index
+
+y_train= train_up_df['Survived']
+
+
+y_train.head(10)
+
+
+train_up_df = train_up_df.set_index("PassengerId")
+
+train_up_df.head(10)
+
+num_attributes = ["Relatives_On_Board"]
+cat_attributes = ["Pclass","Sex","Embarked","Age_Cat","Fare_Cat"]
+
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+
+num_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="median")),
+        ("scaler", StandardScaler())
+    ])
+
+from sklearn.preprocessing import OneHotEncoder
+
+cat_pipeline = Pipeline([
+        ("imputer", SimpleImputer(strategy="most_frequent")),
+        ("cat_encoder", OneHotEncoder(sparse=False)),
+    ])
+from sklearn.compose import ColumnTransformer
+
+preprocess_pipeline = ColumnTransformer([
+        ("num", num_pipeline, num_attributes),
+        ("cat", cat_pipeline, cat_attributes),
+    ])
+ 
+ columns= ["Upadted_Age","Relatives_On_Board","Pclass","Sex","Embarked","Age_Cat","Fare_Cat"]
+columns= ["Relatives_On_Board","Pclass","Sex","Embarked","Age_Cat","Fare_Cat"]
+train_up_df = train_up_df.reindex (columns=columns)
+
+X_train = preprocess_pipeline.fit_transform(train_up_df[num_attributes+cat_attributes])
+X_train
+
+from sklearn.ensemble import RandomForestClassifier
+
+forest_clf = RandomForestClassifier(n_estimators=100, random_state=42)
+forest_clf.fit(X_train, y_train)
+
+from sklearn.model_selection import cross_val_score
+
+forest_scores = cross_val_score(forest_clf, X_train, y_train, cv=10)
+forest_scores.mean()
+
+from sklearn.svm import SVC
+
+svm_clf = SVC(gamma="auto")
+svm_scores = cross_val_score(svm_clf, X_train, y_train, cv=10)
+svm_scores.mean()
+
+
+'''
+Prepare test data
+'''
+test_data["Updated_Age"] =test_data["Age"]
+
+test_data['Age_Cat'] = ""
+
+test_data.loc [((test_data['Updated_Age']>=0)&(test_data['Updated_Age']<1)),'Age_Cat'] = Age_Cat_ser[0]
+test_data.loc [((test_data['Updated_Age']>=1)&(test_data['Updated_Age']<5)),'Age_Cat'] = Age_Cat_ser[1]
+test_data.loc [((test_data['Updated_Age']>=5)&(test_data['Updated_Age']<10)),'Age_Cat'] = Age_Cat_ser[2]
+test_data.loc [((test_data['Updated_Age']>=10)&(test_data['Updated_Age']<15)),'Age_Cat'] = Age_Cat_ser[3]
+test_data.loc [((test_data['Updated_Age']>=15)&(test_data['Updated_Age']<20)),'Age_Cat'] = Age_Cat_ser[4]
+test_data.loc [((test_data['Updated_Age']>=20)&(test_data['Updated_Age']<30)),'Age_Cat'] = Age_Cat_ser[5]
+test_data.loc [((test_data['Updated_Age']>=30)&(test_data['Updated_Age']<40)),'Age_Cat'] = Age_Cat_ser[6]
+test_data.loc [((test_data['Updated_Age']>=40)&(test_data['Updated_Age']<50)),'Age_Cat'] = Age_Cat_ser[7]
+test_data.loc [((test_data['Updated_Age']>=50)&(test_data['Updated_Age']<60)),'Age_Cat'] = Age_Cat_ser[8]
+test_data.loc [((test_data['Updated_Age']>=60)&(test_data['Updated_Age']<70)),'Age_Cat'] = Age_Cat_ser[9]
+test_data.loc [((test_data['Updated_Age']>=70)&(test_data['Updated_Age']<80)),'Age_Cat'] = Age_Cat_ser[10]
+test_data.loc [((test_data['Updated_Age']>=90)&(test_data['Updated_Age']<100)),'Age_Cat'] = Age_Cat_ser[11]
+
+#Fare Cat
+
+test_data['Fare_Cat'] = ""
+
+test_data.loc [((test_data['Fare']>=0)&(test_data['Fare']<1)),'Fare_Cat'] = Fare_Cat_ser[0]
+test_data.loc [((test_data['Fare']>=2)&(test_data['Fare']<39)),'Fare_Cat'] = Fare_Cat_ser[1]
+test_data.loc [((test_data['Fare']>=40)&(test_data['Fare']<99)),'Fare_Cat'] = Fare_Cat_ser[2]
+test_data.loc [((test_data['Fare']>=100)&(test_data['Fare']<600)),'Fare_Cat'] = Fare_Cat_ser[3]
+
+# Relatives on board
+test_data["Relatives_On_Board"] = test_data ["SibSp"]+test_data ["Parch"]
+
+
+test_data.head(10)
+
+test_df = test_df.set_index("PassengerId")
+
+
+
+test_data = test_data.reindex (columns=columns)
+
+
+
+X_test = preprocess_pipeline.transform(test_data[num_attributes + cat_attributes])
+y_pred = forest_clf.predict(X_test)
